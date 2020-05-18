@@ -1,0 +1,27 @@
+#Permutatietests
+
+
+```{block2, type='ABD'}
+
+Lees uit Chapter 13 (*Handling violations of assumptions*):
+
+* 13.8 *Permutation tests*
+```
+
+Zoals je kan lezen in *The Analysis of Biological Data* is de permutatietest een alternatief voor een verdelingsvrije toets als je data niet aan de voorwaarden voor een GLM voldoen (de residuen zijn niet normaal verdeeld).
+Het nadeel van permutatietests, de soms enorme hoeveelheid berekeningen, is tegenwoordig geen issue meer met de huidige computers.
+
+Een voorwaarde blijft wel van belang: gelijke variantie tussen de groepen!
+Dat geldt ook voor de permutatietest.
+
+We gebruiken de package lmPerm.
+Hierin zit de functie `lmp()` die precies zo werkt als de functie `lm()`.
+Dat is handig, want als je een GLM hebt uitgevoerd en de residuen blijken niet normaal verdeeld, dan kan je gewoon dezelfde code gebruiken en hoef je alleen `lm` te veranderen in `lmp`.
+
+
+```{exercise, package_lmPerm}
+Package lmPerm
+
+* Installeer de package lmPerm
+
+```

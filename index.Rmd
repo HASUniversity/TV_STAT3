@@ -1,0 +1,25 @@
+--- 
+title: "Stat3: Voorbij het General Linear Model"
+author: "Team Toegepaste Biologie Venlo"
+date: '`r Sys.Date()`'
+documentclass: book
+
+site: bookdown::bookdown_site
+biblio-style: apalike
+---
+
+# Voorwoord {-}
+Het afgelopen blok hebben jullie de **GLM** geleerd.
+Dit blok krijg je er nog een kleine aanvulling op met het onderscheid tussen **random** en **fixed** factors.
+Daarnaast gaan we kritisch kijken naar de randvoorwaarden voor het gebruik van een GLM.
+Er worden namelijk een aantal aannames gemaakt bij de berekening van de overschrijdingskans (p-waarde).
+Voldoet je data daar niet aan, dan heb je de keuzes:
+
+* Het risico nemen op een foute inschatting van de p-waarde
+* Data transformeren zodat wel aan de voorwaarden wordt voldaan
+* Een alternatieve toets gebruiken die minder aannames maakt.
+
+Alledrie de opties komen langs dit blok.
+
+Daarnaast buigen we ons over *survivaldata*, een typisch biologisch onderwerp.
+Wil je weten of een bepaalde behandeling overlijden bespoedigt (bijv. in het geval van toxische stoffen of een pesticide), maar ook hoe lang het duurt voordat voedsel bedorven is, dan kan je aan de slag met **survival analysis**.

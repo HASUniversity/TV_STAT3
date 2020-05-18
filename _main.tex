@@ -1,0 +1,367 @@
+\documentclass[]{book}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Stat1: statistische modellen},
+            pdfauthor={Mark Smits},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{longtable,booktabs}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Stat1: statistische modellen}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Mark Smits}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{2019-04-24}
+
+\usepackage{booktabs}
+
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}{Lemma}[chapter]
+\newtheorem{corollary}{Corollary}[chapter]
+\newtheorem{proposition}{Proposition}[chapter]
+\newtheorem{conjecture}{Conjecture}[chapter]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\theoremstyle{definition}
+\newtheorem{example}{Example}[chapter]
+\theoremstyle{definition}
+\newtheorem{exercise}{Exercise}[chapter]
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{solution}{Solution}
+\let\BeginKnitrBlock\begin \let\EndKnitrBlock\end
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{1}
+\tableofcontents
+}
+\chapter*{Voorwoord}\label{voorwoord}
+\addcontentsline{toc}{chapter}{Voorwoord}
+
+Afgelopen blok hebben jullie al aardig wat data verzameld met practica,
+en de meeste ook al met hun bioxperience-project. In dit blok leren
+jullie om {[}data verzameld in practica en bioxperience{]}{[}dit blok
+gaan we di{]}
+
+\section*{Opzet}\label{opzet}
+\addcontentsline{toc}{section}{Opzet}
+
+\chapter{Statistische vragen bij
+grafieken}\label{statistische-vragen-bij-grafieken}
+
+\BeginKnitrBlock{ABD}
+Lees Chapter 1 (\emph{Statistics and samples}):
+
+\begin{itemize}
+\tightlist
+\item
+  Helemaal
+\end{itemize}
+
+Lees Chapter 2 (\emph{Displaying data}):
+
+\begin{itemize}
+\tightlist
+\item
+  Helemaal
+
+  \EndKnitrBlock{ABD}
+\end{itemize}
+
+\section{Soorten grafieken}\label{soorten-grafieken}
+
+Een grafiek is dé manier om data te presenteren. Het laat in één
+oogopslag zien wat voor patronen er in de data zitten. Verschillende
+soorten data vragen om verschillende soorten grafieken.
+
+Een aantal mogelijke soorten grafieken: * Boxplot * Spreidingsdiagram *
+Staafdiagram * Taartdiagram/mozaiekplot
+
+\BeginKnitrBlock{exercise}
+\protect\hypertarget{exr:unnamed-chunk-2}{}{\label{exr:unnamed-chunk-2}
+}Soorten figuren
+
+\begin{itemize}
+\tightlist
+\item
+  Zoek in de literatuur (bijvoorbeeld die je verzameld hebt voor
+  bioxperience) naar voorbeelden voor ieder van bovenstaande typen
+  figuren, en kopieer ze naar je portfolio.
+\end{itemize}
+\EndKnitrBlock{exercise}
+
+Data op de juiste manier presenteren is de eerste stap in het analyseren
+van je data.
+
+\section{Soorten data}\label{soorten-data}
+
+\BeginKnitrBlock{exercise}
+\protect\hypertarget{exr:unnamed-chunk-3}{}{\label{exr:unnamed-chunk-3}
+}Soorten data
+
+Data kan verdeeld worden in drie niveau's.
+
+\begin{itemize}
+\tightlist
+\item
+  Zoek in \emph{Analysis of Biological Data} op welke niveau's dat zijn,
+  noteer ze in je portfolio.
+\item
+  Benoem het niveau van de data in de figuren die je in de vorige
+  opdracht hebt verzameld.
+
+  \EndKnitrBlock{exercise}
+\end{itemize}
+
+\section{Statistische vragen}\label{statistische-vragen}
+
+Achter ieder onderzoek, en dus ook achter iedere dataset, zitten een of
+meerdere onderzoeksvragen. De kunst is om een figuur zo op te zetten dat
+de vraag daarmee beantwoord kan worden. Een onderzoeksvraag wordt
+daarmee automatisch ook een statistische vraag omdat je met data uit een
+steekproef werkt. Daarmee heb je te maken met onzekerheid.
+
+\BeginKnitrBlock{exercise}
+\protect\hypertarget{exr:unnamed-chunk-4}{}{\label{exr:unnamed-chunk-4}
+}Onderzoeksvragen
+
+\begin{itemize}
+\tightlist
+\item
+  Zoek uit welke onderzoeksvragen horen bij de figuren die je hebt
+  uitgezocht in de vorige opdrachten.
+\item
+  Zoek uit (tip: check materiaal en methode) welke statistische toets
+  gebruikt is om de onderzoeksvraag te beantwoorden.
+\item
+  Wat is de conclusie van de statistische toets?
+\item
+  Noteer alle antwoorden in je portfolio.
+\end{itemize}
+\EndKnitrBlock{exercise}
+
+\chapter{Data beschrijven}\label{data-beschrijven}
+
+\BeginKnitrBlock{ABD}
+Lees: Chapter 3 (\emph{Arithmetic mean and standard deviation}):
+
+\begin{itemize}
+\tightlist
+\item
+  Paragraph 3.1 (\emph{Arithmetic mean and standard deviation})
+\end{itemize}
+
+Lees: Chapter 4 (\emph{Estimating with uncertainty}):
+
+\begin{itemize}
+\tightlist
+\item
+  Helemaal
+
+  \EndKnitrBlock{ABD}
+\end{itemize}
+
+Sommige figuren laten de ruwe data zien. Een goed voorbeeld is een
+spreidingsdiagram. Andere figuren geven alleen het gemiddelde en de
+spreiding, zoals in de meeste staafdiagrammen.
+
+Met `verklarende statistiek' probeer je de variatie in je data te
+verklaren. Dat doe je aan de hand van een statistisch model.
+
+\BeginKnitrBlock{exercise}
+\protect\hypertarget{exr:unnamed-chunk-6}{}{\label{exr:unnamed-chunk-6} }
+\EndKnitrBlock{exercise}
+
+\section{Verklarende variabelen}\label{verklarende-variabelen}
+
+\section{Overschrijdingskans}\label{overschrijdingskans}
+
+\section{Welke toetsen voor welke
+data?}\label{welke-toetsen-voor-welke-data}
+
+\subsection{2 groepen}\label{groepen}
+
+\subsection{3 groepen}\label{groepen-1}
+
+\subsection{Correlatie/Regressie}\label{correlatieregressie}
+
+\chapter{Power en steekproefgrootte}\label{power-en-steekproefgrootte}
+
+\BeginKnitrBlock{ABD}
+Lees Chapter 6 (\emph{Hypothesis testing}):
+
+\begin{itemize}
+\tightlist
+\item
+  Helemaal
+
+  \EndKnitrBlock{ABD}
+\end{itemize}
+
+\section{Foute conclusies}\label{foute-conclusies}
+
+\section{Power}\label{power}
+
+\section{Minimale steekproefgrootte}\label{minimale-steekproefgrootte}
+
+\section{Simuleren}\label{simuleren}
+
+\chapter{t-toets voor één steekproef}\label{t-toets-voor-een-steekproef}
+
+\BeginKnitrBlock{ABD}
+Lees Chapter 11 (\emph{Inference for a normal population}):
+
+\begin{itemize}
+\tightlist
+\item
+  Paragraph 11.3 (\emph{The one-sample t-test})
+
+  \EndKnitrBlock{ABD}
+\end{itemize}
+
+\chapter{Gepaarde t-toets}\label{gepaarde-t-toets}
+
+\BeginKnitrBlock{ABD}
+Lees Chapter 12 (\emph{Comparing two means}):
+
+\begin{itemize}
+\tightlist
+\item
+  Paragraph 12.1 (\emph{Paired sample versus two independent samples})
+\item
+  Paragraph 12.2 (\emph{Paired comparison of means})
+\item
+  Paragraph 12.3 (\emph{TWo-sample comparison of means})
+
+  \EndKnitrBlock{ABD}
+\end{itemize}
+
+\chapter{Voorwaarden t-toetsen:}\label{voorwaarden-t-toetsen}
+
+\BeginKnitrBlock{ABD}
+Lees Chapter 12 (\emph{Comparing two means}):
+
+\begin{itemize}
+\tightlist
+\item
+  Paragraph 12.5 (\emph{The fallacy of indirect comparison})
+\end{itemize}
+
+Lees Chapter 13 (\emph{Handling violations of assumptions}):
+
+\begin{itemize}
+\tightlist
+\item
+  Paragraph 13.1 (\emph{Detecting deviations from normality})
+\item
+  Paragraph 13.2 (\emph{When to ignore violations of assumptions})
+\item
+  Paragraph 13.3 (\emph{Data transformations})
+
+  \EndKnitrBlock{ABD}
+\end{itemize}
+
+\section{Onafhankelijke waarnemingen}\label{onafhankelijke-waarnemingen}
+
+\section{Normaliteit als basis voor statistische
+toetsen}\label{normaliteit-als-basis-voor-statistische-toetsen}
+
+\begin{itemize}
+\tightlist
+\item
+  teruggrijpen op statistisch model
+\item
+  studentized residuals normaal verdeeld
+\end{itemize}
+
+\section{Wanneer normaal verdeeld?}\label{wanneer-normaal-verdeeld}
+
+\subsection{Skewness}\label{skewness}
+
+\subsection{Kurtosis}\label{kurtosis}
+
+\subsection{Statistische toets op
+normaliteit}\label{statistische-toets-op-normaliteit}
+
+\subsection{Visueel via QQ-plots of
+histogrammen}\label{visueel-via-qq-plots-of-histogrammen}
+
+\section{Transformatie}\label{transformatie}
+
+
+\end{document}

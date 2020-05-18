@@ -1,0 +1,199 @@
+#Nonlineare regressie
+
+```{block2, type='ABD'}
+
+Lees uit Chapter 17 (*Regression*):
+
+* 17.8 *Nonlinear regression*
+* 17.9 *Logistic regression: fitting a binary response variable*
+```
+
+Tot nu toe hebben we ons alleen maar bezig gehouden met **lineaire** statistische modellen.
+Maar soms heb je een verband tussen je respons- en verklarende variabele die niet lineair is.
+Denk bijvoorbeeld aan het typische verband tussen enzymsnelheid en enzymconcentratie.
+Deze les gaan we aan de slag met zulk soort data.
+
+
+##Nonlineaire regressies
+De standaardfunctie voor lineaire regressies `lm()` kan niet overweg met andere verbanden dan lineair of groepen.
+R heeft een standaardfunctie voor nonlineaire regressie (`nlm()`), maar die werkt niet zo goed.
+
+Wat is nu de moeilijkheid?
+Lineaire functies kunnen door middel van matrixrekenen rekenkundig opgelost worden.
+Dan kom je automatisch op het juiste antwoord.
+Bij nonlineaire functies gaat dat meestal niet lukken.
+Daarvoor in de plaats moet de computer op basis van herhaaldelijk schatten van de functieparameters steeds dichter bij de uitkomst komen.
+Dat noem je een iteratief proces.
+
+Dat lijkt simpel, maar computers kunnen daar flink de plank mee mis slaan.
+Kenneth Levenberg heeft in 1944 een slim algoritme gepubliceerd om dit op te lossen.
+Donald Marquardt heeft dit algoritme in 1963 herondekt, en sindsdien gaat het door het leven als het Levenberg-Marquardt algoritme.
+Jorge Moré heeft in 1978 het algoritme aangepast en een snelle computercode geschreven in FORTRAN (een van de oercomputertalen) en vrijwilligers (Elzhov *et al.*) hebben deze code verwerkt in een R package, die we nu gaan installeren:
+
+```{exercise}
+minpack.lm
+
+* Installeer de package minpack.lm
+
+
+```
+
+Mooi toch hoe kennis doorstroomt, en beschikbaar blijft naar de nieuwe generatie onderzoekers?
+
+Hoe werkt dat nu in de praktijk?
+Als voorbeeld groeidata van komkommer:
+
+```{r, echo=FALSE, warning=F, message=F}
+library(readxl)
+library(tidyverse)
+komkommer <- read_excel("../data/komkommer.xlsx")
+komkommer %>% 
+  ggplot(aes(tijd, massa)) +
+  geom_point() +
+  theme_classic()
+
+```
+
+Zoals bij de meeste groeidata, is het verband exponentieel:
+
+$massa=a*e^{b*tijd}$
+
+Deze functie kunnen we fitten door de data, met behulp van een nonlineaire regressie:
+
+```{r}
+library(minpack.lm)
+fit <- nlsLM(massa~a*exp(b*tijd), start=list(a=0.1, b=1), data=komkommer)
+```
+
+je begint de functie met het wiskundig verband tussen de responsvariabele en een of meerdere verklarende variabelen.
+Daar horen een of meerdere parameterwaarden bij die d.m.v. iteratie geschat worden (waarbij de restvariantie geminimaliseerd wordt, net als bij lineaire regressie).
+Met het argument **start** geef je de beginwaarden voor de parameters aan waarmee het iteratieproces begonnen wordt.
+
+De uitkomst van de regressie kunnen we uitlezen met de functie `summary()`:
+
+```{r}
+summary(fit)
+
+```
+
+Met de functie `predict()` kunnen we, net als met lineaire regressies, voorspellingen doen.
+In dit geval doen we dat voor iedere tijdstap van 1 t/m 25:
+
+```{r, warning=F, message=F}
+pr <- data.frame(tijd=1:25)
+pr$massa <- predict(fit, pr)
+```
+
+Die voorspelling kunnen we, samen met de gemeten data, plotten in een figuur:
+
+```{r, warning=F, message=F}
+(ggplot(aes(tijd, massa), data=komkommer) +
+geom_point() +
+geom_line(data=pr) +
+theme_classic())
+```
+
+Als we nu inzoomen op de *residuals*:
+
+```{r, message=F, warning=F}
+komkommer$res <- residuals(fit)
+komkommer %>% 
+  ggplot(aes(tijd, 0)) +
+  geom_hline(yintercept=0) +
+  geom_segment(aes(xend=tijd, yend=res, colour=res)) +
+  scale_colour_gradient(low="blue", high="red") +
+  theme_classic()
+```
+
+Dan zien we duidelijk een trend van links klein tot rechts groot.
+
+
+
+```{exercise, Komkommer}
+Komkommer
+
+In plaats van bovenstaande aanpak, kan je ook eerst een logtransformatie uitvoeren op massa en vervolgens een lineaire regressie uitvoeren.
+
+* Wat voor effect zou dat hebben op de residuals?
+* Download de komkommerdata van Blackboard, importeer deze data.
+* Voer een logtransformatie uit op massa, sla deze data op als een extra variabele in komkommer.
+* Voer een lineaire regressie uit.
+* Gebruik bovenstaande code om de residuals weer te geven.
+* Welke aanpak is beter voor deze data: nonlineaire regressie of logtransformatie gevolgd door lineaire regressie?
+
+```
+
+Wil je ook het betrouwbaarheidsinterval van je voorspelde waarde weten, dan werkt de functie `predict()` niet voor een nlsLM-object.
+Daarvoor heb je de functie `predictNLS` nodig uit de package **propagate**.
+
+
+##Startwaarden schatten
+Het schatten van de juiste parameterwaarden voor de formule is een iteratief proces. 
+Hoe dichter je bij de juiste waarden begint, des sneller het proces.
+Geef je startwaarden op die echt nergens op slaan, dan kan de procedure vastlopen.
+Het is dus handig om vooraf zo goed mogelijk in te schatten welke formule er uit komt.
+
+Als voorbeeld enzymactiviteit:
+```{r, echo=F, warning=F, message=F}
+library(knitr)
+S <- c(0,1,2,5,8,12,30,50)
+V <- c(0,11.1,25.4,44.8,54.5,58.2,72.0,60.1)
+df <- data.frame(S,V)
+kable(df, col.names = c("[Substraat]($\\\\mu g/l$",
+                        "enzymactiviteit ($\\\\mu mol l^{-1} s^{-1}$"),
+      escape = FALSE)
+
+```
+
+```{r, echo=F, warning=F, message=F}
+df %>% 
+  ggplot(aes(S,V)) +
+  geom_point() +
+  theme_classic()
+```
+
+De formule voor enzymactiviteit is:
+
+$V=V_{max} \frac{S}{K_M+S}$
+
+waarbij V de snelheid van de reactie is, en S de substraatconcentratie.
+V_max_ is de maximale snelheid en K_M is de substraatconcentratie waarbij de snelheid de helft van V_max_ is.
+
+```{exercise, Enzymactiviteit}
+Enzymactiviteit
+
+* Schat de waarden voor V_max_ en k_M_.
+* Voor een nonlineaire regressie uit.
+* Bereken het 95%-betrouwbaarheidsinterval bij een substraatconcentratie van 15 (gebruik de functie `predictNLS` uit de package propagate)
+
+```
+
+
+##Overige opdrachten
+
+```{exercise, Eieren}
+Eieren
+
+Een groep studenten heeft een onderzoek gedaan naar kippen.
+Zij lieten de kippen een voedingssupplement eten in verschillende hoeveelheden en bekeken vervolgens de gemiddelde hardheid van de eieren die deze kippen produceerden op een schaal van 0 (zeer zwak) tot en met 10 (zeer sterk).
+In onderstaande tabel zie je de resultaten van dit onderzoek:
+
+```
+
+```{r, echo=F}
+library(readxl)
+library(knitr)
+
+ei <- read_excel("../data/bestanden bij opgaven/kip_en_ei.xlsx")
+kable(ei)
+
+```
+
+
+* Download het bestand kip_en_ei.xlsx van blackboard den importeer deze data.
+* Voer een lineaire regressie uit. Geef de vergelijking van de regressielijn en de bijbehorende R^2^.
+* Pas ook een logaritmische regressie toe ($y=b_0+b_1*ln(x)$)
+* Een kip krijgt 20 g voedingssupplement. Voorspel het 95%-betrouwbaarheidsinterval van de hardheid van de eierschaal met behulp van het lineair model en van het nonlineair model.
+* Doe het zelfde bij 40 g voedingssupplement. Wat valt je op?
+
+```

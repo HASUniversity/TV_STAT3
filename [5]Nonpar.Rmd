@@ -1,0 +1,167 @@
+#Verdelingsvrije toetsen
+
+```{block2, type='ABD'}
+
+Lees Chapter 13 (*Handling violations of assumptions*):
+
+* 13.4 *Nonparametric alternatives to one-sample and paired t-tests*
+* 13.5 *Comparing two groups: the Mann-Whitney U-test*
+* 13.6 *Assumptions of nonparametric tests*
+* 13.7 *Type I and Type II error rates of nonparametric methods*
+
+Lees Chapter 15 (*Comparing means of more than two groups*):
+
+* 15.2 *Assumptions and alternatives*
+
+```
+
+Als je data niet voldoet aan de voorwaarden voor een GLM (zie hoofdstuk 2) en een logtransformatie niet helpt (zie hoofdstuk 3), dan heb je twee opties:
+
+* Een **verdelingsvrije toets** gebruiken (je beschouwt je data als ordinale data, dit hoofdstuk).
+* Een **permutatietoets** uitvoeren (je haalt je verdeling uit je steekproefdata, zie hoofdstuk 6)
+
+##Wanneer welke verdelingsvrije toets?
+Voor de meeste toetsen die vorig jaar en afgelopen blok langs zijn gekomen, is er een verdelingsvrij alternatief:
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(readxl)
+library(knitr)
+kable(read_excel("../data/nonpartoetsoverzicht.xlsx"))
+
+```
+
+Deze toetsen werken natuurlijk ook goed als je echte **ordinale data** hebt (zoals vaak bij een enquête: "Wat vindt je van statistiek op een schaal van 1 t/m 5?").
+
+##Spearman correlatie
+Doel van en correlatietoets is om te testen of er een positief of negatief verband is tussen twee variabelen.
+
+Als voorbeeld data uit een studie van Melfi & Poyser (2007).
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(readxl)
+library(knitr)
+df <- read_excel("../data/apen.xlsx")
+kable(df)
+
+```
+
+De apen zijn geordend van hoogste in rang (nr.1) tot laagst (nr.5).
+Het idee is dat hoe hoger in rang, hoe hoger de infectiegraad van een darmparasiet.
+Als maat hiervoor zijn eitjes in de ontlasting onderzocht.
+We verwachten dus een negatieve correlatie tussen rangnummer en aantal eitjes.
+
+Rangorde is een variabele van ordinaal niveau, dus gaan we voor een spearman correlatietoets:
+
+```{r}
+cor(df$Dominantie, df$Eieren, method = "spearman")
+```
+En inderdaad, we vinden een sterke negatieve correlatie.
+Dus hoe hoger in rang, des te hoger de infectiedruk.
+
+
+##t-testen
+De functie `wilcox.test` werkt hetzelfde als `t.test()`.
+Je kan hier dus ook de verschillende t-toetsen doen: one-sample, gepaard, onafhankelijk,m en kiezen om eenzijdig te toetsen.
+
+We gebruiken hetzelfde voorbeeld als jullie eind jaar 1 bij de behandelinge van de onafhankelijke t-toets hebben gezien:
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+behandeling <- rep(c("controle", "bemest"), each = 5)
+plantlengte <- c(15,17,16,14,16,15,23,21,27,18)
+plantdata <- data.frame(behandeling, plantlengte)
+kable(plantdata)
+
+```
+
+Voeren we een eenzijdige onafhankelijke t-toets uit:
+
+```{r, warning=FALSE}
+t.test(plantlengte~behandeling, data = plantdata, alternative = "greater")
+```
+
+
+Testen we de residuën, dan krijgen we de volgende uitkomsten:
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(e1071)
+fit <- lm(plantlengte~behandeling, data = plantdata)
+res <- rstudent(fit)
+
+```
+
+* Shapiro-Wilk: W = `r round(shapiro.test(res)$statistic, 2)`
+* Skewness: `r round(skewness(res, type = 2), 2)`
+* Kurtosis: `r round(kurtosis(res, type = 2), 2)`
+
+Voeren we dezelfde toets nu uit met een verdelingsvrije toets:
+
+```{r}
+wilcox.test(plantlengte~behandeling, data = plantdata, alternative = "greater")
+```
+
+Dan zien we een fractie hogere p-waarde (verdelingsvrije toetsen hebben meestal een iets lagere power), maar we kunnen nu wel veiliger aannemen dat we niet ten onrechte de H~0~ verwerpen.
+
+
+##Anova
+De alternatieve functie voor een one-way ANOVA werkt vergelijkbaar met de functie `lm()`.
+Als voorbeeld een dataset uit R zelf, over het effect van een insecticide:
+
+```{r, message=FALSE, warning=FALSE}
+data(InsectSprays)
+kruskal.test(InsectSprays$count~InsectSprays$spray)
+
+```
+
+De Kruskal-Wallis test kan niet overweg met een factorial design (dus met data waar je een two-way ANOVA voor nodig hebt) en ook niet met een covariaat (zoals gebruikt in regressies).
+Het is dus niet onder alle omstandigheden een alternatief voor de functie `lm()`.
+
+
+
+##Blokeffecten
+Als je blokeffecten hebt, en per blok maar een waarneming hebt per behandeling, dan kan je de Friedmantest gebruiken.
+
+Als voorbeeld weer de alcoholdata:
+
+```{r, message=FALSE, warning=FALSE}
+library(readxl)
+alcohol <- read_excel("../data/alcohol.xlsx")
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+alcohol_long <- alcohol %>% 
+  gather(key = "aantal", value = "score", -persoon)
+```
+
+```{r, message=FALSE, warning=FALSE}
+friedman.test(score~aantal | persoon  ,data = alcohol_long)
+```
+
+##Opgaven
+
+```{exercise, Docent}
+Nieuwe docent
+
+Een nieuwe docent wordt op twee tijdstippen in het jaar door 10 dezelfde studenten beoordeeld op een 5-puntsschaal (1=slecht t/m 5=uitstekend).
+Men wil weten of deze docent in april beter beoordeeld wordt dan in oktober.
+
+* Waarom zou je voor deze data een verdelingsvrije toets gebruiken?
+* Download het bestand "docentbeoordeling.xlsx" van Blackboard.
+* Voor de juiste toets uit om bovenstaande vraag te beantwoorden.
+* Wat is je conclusie?
+
+```
+
+
+```{exercise, Bloeitijd}
+Bloeitijd
+
+In een meerjarig onderzoek is gekeken op welke datum de bloei van een aantal planten begonnen is.
+We willen kijken of er tussen de plantensoorten verschil is in volgorde van bloeidatum.
+
+* Download het bestand *bloeitijd.xlsx* van blackboard.
+* Voer de juiste toets uit.
+* Wat is je conclusie?
+
+```

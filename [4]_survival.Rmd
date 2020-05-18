@@ -1,0 +1,174 @@
+#Survival analysis
+Doe je onderzoek naar levensduur van organismen/machines/bouwwerken/etc. dan heb je vaak te maken met incomplete data: aan het einde van de studie is nog niet iedereen dood/kapot/ingestort/etc.
+Zulke data noem je *censored data* in het Engels.
+
+Je hebt dus van een aantal onderzoekseenheden geen levensduur of tijd tot de gebeurtenis.
+Een oplossing is aannemen dat de levensduur gelijk is aan de lengte van het experiment, maar dan onderschat je die levensduur (ze zijn immers nog niet dood).
+Je kan ze ook verwijderen uit je dataset als *missing values*.
+Ook daarmee onderschat je de levensduur.
+
+Voor zulk soort data is *survival analysis* ontwikkeld.
+De analyse maakt gebruik van een **survival function**,  meestal wordt de *Kaplan-Meier cumulative survival probability* gebruikt. 
+Deze schat de overlevingskans op een bepaald tijdstip.
+Voorwaarde is dat de gebeurtenis per proefpersoon/object maar een keer voor kan komen. 
+
+##Drie soorten censoring
+Afhankelijk van je experiment kan je te maken met verschillende soorten *censored data*.
+
+###*Right-censoring* (links afgeknotte data)
+Dit is de meest algemene vorm.
+Voorbeelden hiervan:
+
+* Aan het einde van de studie is het proefobject nog niet dood/kapot/ingestort/etc.
+* Gedurende de studie vallen proefobjecten af (bijv. proefpersonen stoppen met het experiment).
+* Proefpersonen overlijden tijdens de studie aan andere oorzaken.
+
+Wat weten nu van het proefobject dat de levensduur langer is dan de duur van het experiment, of de periode dat die meeliep in het experiment.
+
+###*Left-censoring* (rechts afgeknotte data)
+Dit komt voor als je focust op *events* die ook voor aanvang van de studie kunnen hebben plaatsgevonden. 
+Voorbeeld hiervan:
+
+* Kind heeft voor aanvang studie al de vaardigheid aangeleerd.
+
+We weten niet wanneer het kind die vaardigheid heeft aangeleerd, alleen dat het op jongere leeftijd is dan de start van de studie.
+
+###Interval-censoring
+Stel dat patiënten iedere drie maanden gecheckt worden op terugkomen van een bepaalde ziekte.
+Wanneer die ziekte opnieuw gediagnosteerd wordt, weet je alleen dat die ziekte ergens in de afgelopen drie maanden is teruggekomen.
+
+In deze les richten we ons alleen op de *right-censored data*.
+De reden is dat 
+
+##De package survival
+De package **survival** bevat een groot aantal functies om met levensduurdata om te gaan.
+
+```{exercise, surivvalpackage}
+package survival
+
+* Installeer de pacakge survival
+
+```
+
+De functies binnen deze packages werken met een speciale datastructuur, **Surv-objecten** genoemd.
+Zo'n object maak je met de functie `Surv`:
+
+```{r, warning = FALSE, message = FALSE}
+library(survival)
+df <- lung
+S <- Surv(lung$time, lung$status)
+
+```
+
+In bovenstaande code hebben we eerst de package geladen, vervolgens een dataset uit die package geladen (data over longkankerpatiënten), en daarmee een *Surv-object* gemaakt.
+
+Dat *Surv-object* kunnen we vervolgens gebruiken om een *survival function* te fitten:
+
+```{r}
+fit <- survfit(S~df$sex)
+fit
+
+```
+
+je ziet hoeveel waarnemingen je hebt voor iedere groep (**n**), hoeveel van die groepen er overleden waren (**event**), mediaan van overlevingsduur (**median**), met 95%-betrouwbaarheidsinterval (**095LCL** en **0.95UCL**).
+
+##Survivalplots
+
+De package survival gebruikt de basisfunctie `plot()` om overleving te visualiseren:
+
+```{r}
+plot(fit)
+```
+
+Die gefitte data kan je niet rechttoe-rechtaan in ggplot gebruiken.
+Gelukkig is hiervoor de package **ggfortify** hiervoor ontwikkeld.
+
+```{exercise, GGfortify}
+ggfortify
+
+* installeer de package ggfortify
+
+```
+
+Hoe kan je een mooiere figuur maken in ggplot?
+
+```{r, message = FALSE, warning = FALSE}
+library(ggfortify)
+library(tidyverse)
+
+autoplot(fit)
+```
+
+De functie `autoplot()` gebruikt het **survfit-object** om een ggplot-object te maken.
+Met de normale codes om ggplotfiguren te veranderen kan je figuur naar je eigen smaak aanpassen:
+
+```{r, message = FALSE, warning = FALSE}
+
+autoplot(fit) +
+  guides(fill=FALSE) +
+  scale_color_manual(name = "Geslacht", labels = c("man", "vrouw"),
+                     values = c("1"="blue", "2"= "deeppink1")) +
+  scale_fill_manual(values = c("1"="blue", "2" ="deeppink1")) +
+  theme_classic()
+
+```
+
+##De Log-rank test
+Zoals meestal in de statistiek willen we weten of de groepen van elkaar verschillen.
+Voor survivalfuncties gebruik je de **log-rank test**.
+
+De H~0~ is dat mannen en vrouwen dezelfde survivalfunctie hebben en de H~1~ is dat ze een verschillende curve hebben.
+
+We gebruiken hiervoor de functie `survdiff()` uit de package survival:
+
+```{r}
+survdiff(S~df$sex)
+
+```
+
+
+```{exercise, Ratten}
+Ratten
+
+De package Survival bevat een dataset van een experiment waarbij ze naar ontstaan van tumoren bij ratten hebben gekeken.
+
+* Laadt de data met behulp van de volgende code `df <- rats`
+
+Er zijn 150 mannetjes en 150 vrouwtjes gevolgd over 104 dagen.
+
+* Voer de volgende stappen uit:
+    * Maak een Surv-object van deze data
+    * Fit een survival-functie
+    * Plot de survival-functie
+    * Test m.b.v. een log-ranktest of geslacht een verschillende leeftijd hebben tot krijgen van tumoren.
+
+```
+
+
+
+Is je statistisch model ingewikkelder, wil je bijvoorbeeld meerdere verklarende variabelen testen, dan voldoet bovenstaande toets niet.
+Daarvoor kan je een **Cox proportional hazards model** gebruiken, zie volgende paragraaf.
+
+##Cox proportional hazard model
+In de **lung**-dataset die we in voorgaande voorbeelden hebben gebruikt is meer data verzameld.
+Met de *Cox proportional hazard model* kunnen we, net als in een GLM een uitgebreider statistisch model gebruiken.
+Hieronder hebben we als verklarende factoren, naast geslacht, ook leeftijd en een maat voor algemeen welzijn (Karnofsky score). 
+
+```{r, message=FALSE, warning=FALSE}
+
+fit_cox <- coxph(S~sex+age+ph.karno, data=df)
+summary(fit_cox)
+```
+
+
+```{exercise, Coxprop}
+Cox proportional hazard model
+
+In het rattenexperiment is er ook een behandeling toegepast die mogelijk extra tumorgroei geeft (aangegeven met de variabele rt).
+
+* Gebruik een Cox proportional hazard model om het effect van geslacht en rt op ontstaan van tumoren te testen.
+* Wat is je conclusie?
+
+```
+
+

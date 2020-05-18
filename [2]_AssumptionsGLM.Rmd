@@ -1,0 +1,323 @@
+#Aannames van het General Linear Model
+
+```{block2, type='ABD'}
+
+Lees uit Chapter 13 (*Comparing means of more than two groups*):
+
+* 13.1 *Detecting deviations from normality*
+* 13.2 *When to ignore violations of assumptions*
+* 13.3 *Data transformations*
+* 15.2 *Assumptions and alternatives*
+* 17.5 *Assumptions of regression*
+
+```
+
+Er zit een aantal voorwaarden aan het gebruik van het GLM:
+
+* De data (in ieder geval de *residuals*) moet normaal verdeeld zijn
+* Gelijke variantie (binnen de groepen, of over de range van een verklarende variabele in een regressiemodel)
+
+
+Voldoet je data niet aan de voorwaarden, dan zijn er twee mogelijke routes:
+
+* Data transformeren in de hoop dat de getransformeerde data wel aan de voorwaarden voldoet.
+* Een andere toets gebruiken die deze aannames niet gebruikt.
+
+In dit hoofdstuk ga je leren hoe je kan onderzoek of je data aan bovengenoemde voorwaarden voldoet.
+Daar zijn toetsen voor, maar je kan ook visueel (bijv. met een histogram) bekijken in hoeverre je data afwijkt.
+Beide manieren behandelen we hier.
+
+Verder behandelen we de log-transformatie.
+Dat is vaak de meest logische keuze met biologische data.
+
+
+##Residuals
+```{r, echo=FALSE, message=F, warning=F}
+library(tidyverse)
+set.seed(2)
+behandeling <- rep(c("A", "B", "C"), each=10)
+effect <- c(rnorm(10, 5, 3), rnorm(10, 15, 3), rnorm(10, 10, 3))
+df <- data.frame(behandeling, effect)
+```
+
+```{r, echo=FALSE, message=F, warning=F, fig.width= 2}
+df %>% 
+  ggplot(aes("", effect)) +
+  stat_summary(fun.y=mean, geom="errorbar", aes(ymax=..y.., ymin=..y..),
+               width=1) +
+  geom_jitter(show.legend = FALSE, aes(color=behandeling)) +
+  theme_classic()
+```
+
+De term *residual* (letterlijk overblijfsel) staat voor restvariatie.
+Je begint met een grote puntenwolk.
+
+Daar fit je een statistisch model in om zoveel mogelijk van de variatie in de puntenwolk te verklaren.
+
+```{r, echo = FALSE, warning=F, message=F}
+df %>% 
+  ggplot(aes(behandeling, effect, colour = behandeling)) +
+  geom_point(show.legend = FALSE) +
+  stat_summary(fun.y=mean, geom="errorbar", aes(ymax=..y.., ymin=..y..),
+               width=1) +
+  theme_classic()
+```
+
+De variatie die je overhoudt, zijn de *residuals*:
+
+```{r, echo = FALSE, warning=F, message=F}
+library(magrittr)
+fit <- lm(effect~behandeling,data=df)
+df %<>% 
+  mutate(residuals = fit$residuals)
+df %>% 
+  ggplot(aes(behandeling, residuals, colour=behandeling)) +
+  geom_point() +
+  geom_hline(yintercept=0) +
+  theme_classic()
+```
+
+Nu is het statistisch model zo gekozen dat de overgebleven **variantie** geminimaliseerd wordt.
+
+De gemeten restvariantie is dus kleiner dan de werkelijke!
+Zoiets hebben we eerder meegemaakt met de z-toets.
+Als je die gebruikt voor een steekproef, waarbij je het gemiddelde schat uit dezelfde steekproef, dan maak je een onderschatting van de variantie.
+Daarom heeft William Gosset (van Guinness) de t-toets ontworpen.
+De *residuals* in bovenstaande figuur volgt ook een t-verdeling!
+
+Eigenlijk willen we testen of de *residuals* de t-verdeling volgen, maar in R doen we dat op de volgende manier:
+
+* Eerst corrigeren we *residuals* voor de t-verdeling, zodat ze (als de onderliggende populatieverdeling normaal verdeeld is!) normaal verdeeld zijn.
+* Daarna onderzoeken we of de gecorrigeerde *residuals* een normale verdeling volgen.
+
+Een stukje R-code:
+```{r}
+res <- rstudent(fit)
+```
+
+met de functie `rstudent()` worden de gecorrigeerde *residuals* berekend en opgehaald.
+Die kan je dan in een object opslaan (in het voorbeeld hierboven is dat het object res).
+
+
+##Zijn de residuen normaal verdeeld? Berekeningen
+Er zijn een aantal toetsen die je kan uitvoeren om te testen of je data normaal verdeeld is.
+
+###Shapiro-Wilk
+Met deze toets test je of je gevonden verdeling significant afwijkt van een normale verdeling.
+Met deze toets kijken we niet naar de overschrijdingskans (p-waarde), maar naar de *test statistics* **W**.
+Als W>0.9 dan zitten we veilig qua aanname van normaliteit.
+De reden dat we niet naar de p-waarde kijken is dat bij grotere steekproeven je al heel snel een significante afwijking in normaliteit kan vinden (hoge power!), terwijl die afwijking zodanig klein is dat het amper effect heeft op de betrouwbaarheid van bijv. je ANOVA.
+
+Hoe doe je dat in R:
+```{r}
+shapiro.test(res)
+```
+
+In dit geval zitten we veilig, want de W=0.9584 en dat is hoger dan 0.9.
+
+###Skewness
+Een normale verdeling is symmetrisch rondom het gemiddelde, de staart naar links heeft dezelfde vorm als de staart naar rechts.
+Een afwijking hiervan is een indicatie dat de verdeling afwijkt van de normale verdeling.
+Een maat hiervoor is de **skewness**.
+Oorspronkelijk had skewness een waarde tussen -2 en +oneindig.
+Er zijn verschillende varianten hiervan waarvan wij degene gebruiken die een negatieve waarde geeft voor een staart naar links, 0 bij perfect symmetrisch en een positieve waarde geeft bij een staart naar rechts (voor details over de verschillende methoden, zie [Joanes and Gill, 1998](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/1467-9884.00122)).
+Een waarde tussen de -1 en +1 vinden we nog acceptabel.
+
+Hoe doe je dat in R?
+Je hebt allereerst de package e1071 nodig:
+
+```{exercise}
+e1071
+
+* Installeer de package e1071 op je computer
+
+```
+
+Daarna is het simpel:
+
+```{r}
+library(e1071)
+skewness(res, type=2)
+
+```
+
+Het argument **type** staat voor welke omrekening gemaakt wordt.
+Zoals je ziet valt de waarde in dit geval keurig binnen de range. 
+
+Met een histogram zie je dat er een iets scheve verdeling is:
+
+```{r, echo = FALSE, warning=F, message=F}
+df %<>% 
+  mutate(rstud = rstudent(fit))
+df %>% 
+  ggplot(aes(rstud)) +
+  geom_histogram(fill="white", color = "black", binwidth=0.5) +
+  theme_classic()
+
+```
+
+###Kurtosis
+Kurtosis is een maat hoe plat de verdeling is.
+Als een verdeling relatief plat is ten opzichte van een normale verdeling, dan heeft die verdeling een lage kurtosis (<0).
+Heeft de verdeling juist een hogere piek, dan is de kurtosis hoog (>0).
+Een kurtosis tussen de -2 en +2 vinden we nog acceptabel.
+
+```{r}
+library(e1071)
+kurtosis(res, type=2)
+
+```
+
+Dus samengevat:
+
+* Shapiro-Wilk: W > 0,9
+* -1 < skewness < 1
+* -2 < kurtosis < 2
+
+In ons geval zitten alle metingen binnen de range, dus is er geen reden om aan te nemen dat de data **niet** normaal verdeeld is.
+
+##Residuals bekijken
+Een andere manier om te checken of je data normaal verdeeld is, is om de data goed te bekijken.
+
+Net kwam de histogram al voorbij.
+Een veelgebruikte figuur is de **Q-Q plot** (*quantile-quantile plot*).
+In deze plot zijn de waargenomen en op basis van normale verdeling voorspelde waarden tegenover elkaar uitgezet.
+Als de data echt de normale verdeling volgt, dan liggen de punten op een rechte lijn.
+
+
+```{r, message=F, warning=F}
+library(car)
+qqPlot(fit)
+```
+
+Je ziet dat beide staarten een afwijking naar beneden hebben.
+Dat duidt op een negatieve skewness (wat we ook al eerder gevonden hadden).
+
+Voor een overzicht van interpretaties, zie het volgende [voorbeeld](https://i.stack.imgur.com/ZXRkL.png).
+
+  
+##Uitschieters
+In je dataset kan soms een meetpunt zitten die erg afwijkt van de rest.
+Zo'n punt kan een enorm effect hebben op de uitkomst van je statistische toets.
+Weghalen van deze outliers verkleint je variantie, en verhoogt daarmee de power van je toets.
+Maar wees er wel voorzichtig mee.
+Het kan natuurlijk zijn dat zo'n extreme waarde puur door toeval bestaat, en is daarmee het resultaat van de variatie die in de populatie zit.
+
+Je moet dus een goede reden hebben om een outlier uit je dataset te halen: je hebt bijvoorbeeld een indicatie dat er een meetfout is gemaakt.
+Dit blok krijgen jullie ook alternatieve toetsen die minder gevoelig zijn voor outliers (de zogenaamde **verdelingsvrije methoden**).
+
+De car-package heeft een test om outliers te achterhalen:`outlierTest()`, waarbij je als argument de output van een statistische toets meegeeft (die ik meestal fit noem.
+Als voorbeeld de outliers van de dataset waar we dit hoofdstuk mee bezig zijn.
+Daar hebben we eerder een statistisch model `fit <- lm(effect~behandeling,data=df)` gemaakt.
+
+
+```{r}
+outlierTest(fit)
+
+```
+
+Deze test identificeert de meest extreme waarde in de dataset (op basis van het statistisch model) en berekent voor dat punt de waarschijnlijkheid (op basis van hetzelfde statistisch model).
+Je ziet dat er een bonferronie-correctie op de p-waarde wordt toegepast.
+In dit geval zijn er geen waarden die extreem onwaarschijnlijk zijn.
+
+```{exercise}
+Bonferroni-correctie
+
+* Beredeneer waarom je deze correctie moet toepassen op de p-waarde.
+
+```
+
+
+
+##Gelijke variantie
+Gelijke variantie is, naast normaal verdeelde data, een voorwaarde om een GLM toe te passen (in ieder geval om betrouwbare data te krijgen).
+Met een boxplot kan je al een eerste indicatie krijgen:
+
+```{r, echo=F, warning=F, message=F}
+df %>% 
+  ggplot(aes(behandeling, res)) +
+  geom_boxplot() +
+  theme_classic()
+```
+
+Dan zie je dat in onze dataset er wel iets van verschil is in spreiding tussen de groepen is.
+
+Er zijn ook verschillende testen gelijke om variantie te testen.
+Een daarvan is de **Levene's test**.
+In de car-package zit een simpele functie om deze toe te passen op je statistisch model:
+
+```{r}
+leveneTest(fit)
+```
+
+De H_0_ voor deze toets is dat er geen verschil in variantie is.
+De H_1_ dat er wel verschil in variantie is.
+In dit geval is de overschrijdingskans 0.887, dus helemaal geen reden om de H_0_ te verwerpen.
+Er is dus geen indicatie dat de verschillende groepen een verschillende variantie hebben.
+
+
+##Transformatie
+Als je dat niet normaal verdeeld is en/of je variantie niet gelijk is, dan kan een oplossing zijn om de data te **transformeren**.
+Belangrijk bij transformeren is dat je voor alle datapunten dezelfde transformatie toepast.
+In het boek (chapter 13.3) worden verschillende transformaties besproken.
+Wij behandelen er hier maar een: de **logtransformatie**.
+
+Veel biologische data heeft een bereik van 0 tot heel veel.
+Dat geeft automatisch een scheve verdeling (omdat je geen waarden kleiner dan 0 hebt).
+Met een logtransformatie kan je die verdeling weer symmetrisch maken.
+
+Meestal wordt het natuurlijk logaritme gebruikt (in R `log()`), en soms de 10-log (in R `log10()`).
+Let wel, ieder datapunt krijgt dezelfde transformatie.
+Dan kan problemen geven als je waarde 0 in je dataset hebt (`log(0)`) heeft als uitkomst - oneindig.
+Heb je 0-waarden in je dataset, dan kan je bij iedere datapunt eerst iets optellen, en van de som het logaritme nemen (bijv. `log(effect+1)`).
+
+Hoe doe je dat in R?
+Twee manieren:
+
+* Een nieuwe variabele maken in je dataframe. bijv.: `df$ln_effect <- log(df_effect +1)`.
+* In je statistische toets de variabele veranderen: `lm(log(effect+1) ~ behandeling, data = df)`
+
+##Opdrachten
+
+```{exercise}
+Aaltjes
+
+In een onderzoek is op vijftien identieke proefvelden gekeken naar het aantal aaltjes (*Meloidogyne hapla*) na het telen van geraniums.
+Men heeft de volgende aantallen per 100 ml grond gevonden:
+3, 5, 4, 20, 13, 4, 17, 13, 8, 5, 6, 12, 11, 16 en 11.
+
+
+a.  Voer de aantallen in als vector in R
+b.  bereken de kurtosis en skewness.
+c.  Voer een logtransformatie uit, en voer opdracht b ook uit op de getransformeerde data.
+d.  Kun je op basis van de resultaten concluderen welke versie (wel of niet getransformeerd) het beste met een normale verdeling benaderd kan worden?
+e.  Voer de Shapiro-Wilk-toets uit op de oorspronkelijke en de getransformeerde data. Wat zijn je conclusies?
+
+
+```
+
+```{r, echo=FALSE, eval=FALSE, message=F, warning=F}
+library(readxl)
+library(tidyverse)
+df <- read_excel("../data/ABD/C13_1.xlsx")
+hist(df$uitgaven)
+hist(log(df$uitgaven))
+
+mean(df$uitgaven)
+mean(log(df$uitgaven))
+
+mean_cl_normal(df$uitgaven)
+mean_cl_normal(log(df$uitgaven))
+
+#testen bootstrap
+
+exp(mean_cl_normal(log(df$uitgaven)))
+mean_cl_boot(df$uitgaven)
+
+```
+
+##Opgaven uit het boek
+
+Chapter 13, practice problems 1
+
+

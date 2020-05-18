@@ -1,0 +1,12 @@
+book_filename: "STAT3"
+chapter_name: "Hoofdstuk "
+output_dir: ../../html/stat3
+clean: [packages.bib, bookdown.bbl]
+new_session: yes
+
+language:
+  label:
+    fig: 'Figuur '
+    tab:  'Tabel '
+    eq: 'vergelijking '
+    exr:  'Opdracht '

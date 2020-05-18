@@ -1,0 +1,297 @@
+#Random effects
+
+```{block2, type='ABD'}
+
+Lees Chapter 15 (*Comparing means of more than two groups*):
+
+* 15.5 *Fixed and random effects*
+
+```
+
+In het vorige blok hebben jullie geleerd om in het geval van een *randomized block design* te kiezen voor een *two-way ANOVA*.
+
+De statistische toets test dan voor beide verklarende variabelen (bijv. je behandeling en je blokken) of deze significant bijdragen aan de verklaring van je gevonden waarden (via de F-toets).
+Maar je bent helemaal niet geïnteresseerd of die blokeffecten bestaan!
+Je wilt er slechts voor corrigeren.
+
+In de statistiek worden **fixed** en **random** effects onderscheiden.
+Een *fixed* effect is een variabele waarbij je geïnteresseerd bent of de gekozen groepen van elkaar verschillen.
+Het maakt dus uit welke groepen je hebt gekozen en je kan het experiment herhalen met dezelfde groepen.
+
+Een *random* effect is een variabele die of (i) *random* is gekozen, of (ii) het niet relevant is welke groepen je gekozen hebt voor je experiment (je kon net zo goed andere groepen kiezen).
+
+Een voorbeeld van een random effect zijn we al tegengekomen in de **blokeffecten**.
+Stel, je doet onderzoek naar het effect van drie soorten bemesting op de groei van planten.
+Je hebt vier proefveldjes en ieder proefveldje verdeel je in drie vlakken met ieder een andere soort bemesting:
+
+```{r, echo=F, warning=F, message=F}
+library(knitr)
+bemesting <- c("M1", "M2", "M3")
+Veld1 <- sample(bemesting, 3)
+Veld2 <- sample(bemesting, 3)
+Veld3 <- sample(bemesting, 3)
+Veld4 <- sample(bemesting, 3)
+
+kable(data.frame(Veld1, Veld2, Veld3, Veld4), full_width = FALSE)
+
+```
+
+Het maakt voor het experiment niet uit welke proefvelden je gebruikt.
+Proefveld is dus een *random* variabele.
+Het maakt wel uit welke bemesting je gebruikt, je wilt namelijk de drie gekozen meststoffen met elkaar vergelijken.
+Bemesting is dus een *fixed* variabele.
+
+##Gepaarde waarnemingen
+In principe zijn blokeffecten niets anders dan gepaarde waarnemingen.
+Je bent de term gepaarde waarnemingen al eerder tegen gekomen bij de **gepaarde t-toets**.
+
+Als voorbeeld een experiment waarbij gekeken wordt naar het effect van alcoholconsumptie op rekenvaardigheid.
+Zes studenten hebben (over een periode van 4 weken) in *random* volgorde de volgend behandelingen gevolgd: geen, drie, zes of negen glazen bier.
+Een half uur na de behandelingen moesten ze een wiskundetoets maken waarbij in totaal 100 punten gehaald kon worden.
+Zie hieronder voor de resultaten:
+
+```{r, echo = FALSE}
+library(knitr)
+library(readxl)
+#nette tabel maken
+kable(read_excel("../data/alcohol.xlsx"))
+
+
+```
+
+```{exercise}
+gepaarde t-toets
+
+* Voer de kolommen geen en zes als vector in (`geen <- c(83, 62, etc.)`)
+* Test of zes biertjes een negatief effect heeft op de rekenscore ten opzichte van geen biertje.
+
+```
+
+Met een gepaarde t-toets kan je maar twee groepen vergelijken.
+Wil je meer groepen vergelijken, dan gebruiken we een aangepaste vorm van het General Linear Model: de **Linear Mixed Effects Model**.
+
+
+##Linear Mixed Effects Models
+Met het toekennen van een **random effect** aan een *General Linear Model* (**GLM**), maak je van een GLM een *Linear Mixed Effects Model* (**LME**).
+De R-functie `lm()` voldoet dan niet meer, deze is alleen voor een echte GLM.
+In plaats daarvan gebruiken we de functie `lme()` uit de package **nlme**.
+
+```{exercise}
+nlme
+
+* Installeer de package nlme
+
+```
+
+Met *Linear Mixed Effects Models* kan je veel meer doen dan alleen onderscheid maken tussen *fixed* en *random effects*.
+Vooral in de biologie worden deze statistische modellen, en uitbreidingen hiervan gebruikt.
+Vooralsnog focussen wij alleen op de toepassing van *fixed* en *random effects*.
+
+
+##De functie lme
+De functie `lme()` staat voor *Linear Mixed Effect*.
+Net als in de functie `lm()` vul je in `lme()` een statistisch model in.
+Dat doe je op de volgende manier:
+
+```{r, eval = FALSE}
+lme(effect~var1, random = ~1|var2, data=df)
+```
+
+Waarbij effect de responsvariabele is, var1 de fixed en var2 dw *random* variabele.
+De constructie `random = ~ 1 | var2` komt misschien een beetje raar over. Er zit wel een  logica achter, maar daar hoef je niet je hoofd over te breken.
+
+
+```{exercise}
+Alcohol
+
+* Open een nieuw script, en sla het op onder een logische naam.
+* Download alcohol.xlsx van blackboard. Zet dit bestand in je projectfolder.
+* Importeer de data met `read_excel()`.
+* Bekijk met `View()` de layout van de data.
+* Beredeneer waarom de layout niet direct bruikbaar is in de functie `lme()`.
+
+```
+
+```{r, echo = FALSE}
+library(readxl)
+alcohol <- read_excel("../data/alcohol.xlsx")
+
+```
+
+
+##Testen van alcoholeffect
+De data moet eerst omgezet worden naar een 'lange' tabel:
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+
+alcohol_long <- alcohol %>%
+  gather(key = "aantal", value = "score", -persoon) %>% 
+  mutate(persoon = factor(persoon)) %>% 
+  mutate(aantal = factor(aantal, 
+                          levels = c("geen", "drie", "zes", "negen")))
+
+```
+
+Met de functie `gather` kan je verschillende variabelen samen nemen.
+In dit geval willen we variabelen geen, drie, zes en negen samen nemen in de een variabele die we aantal noemen (het aantal glazen bier dat gedronken is) en een nieuwe variabele maken die we score noemen (de score van de rekentoets).
+
+De variabel persoon willen we niet samenvoegen met de nieuwe variabele aantal, dat geven we aan met het minteken.
+
+Ieder persoon wordt weergegeven met een nummer.
+R maakt van een variabele die alleen cijfers bevat automatisch een numerieke variabele (interval/ratio), maar deze variabele is van nominaal niveau.
+Dat geven in R aan met de term factor.
+
+Het aantal glazen bier wordt door R wel herkend als een factor, want de aantallen zijn geschreven als tekst.
+Nu willen we, wanneer we een figuur willen maken, R wel duidelijk maken in welke volgorde ze gepresenteerd moeten worden.
+Met het argument **levels** geven we aan wat de volgorde is.
+In wezen maken we nu een variabele van ordinaal niveau.
+
+```{exercise}
+lange tabel
+
+* Zet bovenstaande code over naar je script en voer de code uit.
+* Bekijk alcohol_long met de functie `View()`. 
+
+```
+
+Altijd goed om eerst een figuur te maken van de data:
+
+```{r}
+library(tidyverse)
+alcohol_long %>% 
+  ggplot(aes(aantal, score, color = persoon, group = persoon)) +
+  geom_line() +
+  theme_classic()
+
+```
+
+
+Nu willen we het effect van aantal glazen bier op de rekenprestaties testen met een *Mixed effect model*.
+
+```{exercise}
+*Random effects*
+
+* Beredeneer welke variabele je als fixed en welke variabele je als random effect wilt meenemen in het statistisch model.
+* Voer de toets uit met behulp van de functie `lme()`. Sla de output op als een object (bijv. `fit <- lme(....))
+* Bekijk de output met behulp van de functie `anova(fit)`.
+
+```
+
+##Posthoctoets in mixed effects models
+Om een posthoctoets uit te voeren op een *mixed effects model* heb je de package **emmeans** nodig.
+
+```{exercise}
+emmeans
+
+* installeer deze package: install.packages("emmeans")
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+library(nlme)
+fit <- lme(score~aantal, random=~1|persoon, data=alcohol_long)
+
+```
+
+De functie `emmeans()` uit de gelijknamige package wordt gebruikt om een posthoctoets uit te voeren.
+In onderstaande code wordt een Tukey-HSD uitgevoerd op de var1:
+
+```{r eval =  FALSE}
+library(emmeans)
+emmeans(fit, list(pairwise ~ var1), adjust = "tukey")
+
+```
+
+
+Mag je geen tukey-HSD uitvoeren (omdat groepsgrootte niet gelijk is), geef dan voor argument **adjust** de waarde **"bonf"**.
+
+##Extra voorbeeld
+In dit voorbeeld onderzoeken we de invloed van bemesting (twee soorten mest en drie bemestingniveaus) op het ammoniakgehalte in een bepaalde mossoort.
+Dit gehalte is in 7 verschillende maanden gemeten.
+We hebben hier dus te maken gepaarde waarnemingen (iedere locatie is 7 keer gemeten).
+
+
+```{r, echo=F, warning=F, message=F}
+library(knitr)
+df <- read_excel("../data/ammoniak.xlsx")
+kable(df)
+```
+
+Omzetten naar lange tabel:
+```{r}
+df_long <- df %>%
+  gather(key = "maand", value = "ammoniakgehalte", -soort, -hoeveelheid, -ID) %>%
+  mutate(maand = factor(maand,
+                        levels = c("maart", "mei", "juni", "juli",
+                                   "augustus", "september", "oktober"))) %>% 
+  mutate(ID=factor(ID))
+```
+
+En het statistisch model opzetten en uitvoeren.
+We hebben nu twee *random* variabelen: ID (de locatie) en maand (omdat we niet specifiek geïnteresseerd zijn in of maanden van elkaar verschillen).
+In dit geval hebben we in het model als *fixed effect* niet alleen categoriedata (soort mest), maar ook een interval/ratio variabele (hoeveelheid mest).
+Dat kan allemaal in zulk soort modellen.
+
+```{r}
+library(nlme)
+fit <- lme(ammoniakgehalte ~ soort*hoeveelheid, 
+           random = list(~1|maand, ~1|ID), data = df_long)
+anova(fit)
+```
+
+De uitkomst is dat alleen de hoeveelheid mest een significant effect heeft op de hoeveelheid ammoniak in het mos.
+
+
+##Oefeningen
+
+```{exercise}
+Paardenbit
+
+In een onderzoek van studenten van de HAS hebben acht combinaties ruiter en paard meerdere malen een dressuurproef doorlopen waarbij ze van steeds dezelfde jury een score (tussen 0 en 100%) hebben gekregen.
+Op verschillende dagen kregen de paarden een ander soort bit in de mond (hier genoemd bit A, B en C).
+Voor iedere combi werd random bepaald in welke volgorde de verschillende bits werden gedragen.
+
+Ze willen toetsen of er een verschil is in score voor de dressuurproef  tussen de drie soorten bitten.
+
+* Leg uit waarom je de combinatie paard/ruiter als random effect moet meenemen in je statistisch model.
+* Voer de de statistische toets uit (het bestand bit.xlsx vind je op BB) (zet alle stappen in een nieuw script). Wat is je conclusie?
+* Voer ook een posthoctoets uit.
+* Leg uit waarom het belangrijk is om de volgorde van bit dragen random gekozen wordt.
+
+
+```
+
+
+```{exercise}
+vlinders
+
+In een langdurig onderzoek is in twee provincies van België (Brabant en Oost-Vlaanderen) gekeken naar het aantal dagvlinders in tuinen op verschillende plekken in de provincies (stad, villawijk, dorp of platteland).
+Gedurende verschillende jaren is in hetzelfde weekend van dat jaar in dezelfde tuinen het aantal vlinders geteld.
+Zie onderstaande tabel.
+
+* Download het vlinders.xlsx van BB en importeer in R.
+* Maak er een lange tabel van.
+* Toets de volgende vragen (bedenk welke toets nodig hebt, en of je eventueel een random factor moet gebruiken):
+    * Was er in 2008 een verschil in aantal vlinders tussen de twee provincies (hint: gebruik `filter(jaar == 2008))`?
+    * Was er een verschil in aantal vlinders tussen 2008 en 2009?
+    * Heeft ligging tuin en provincie effect hebben op het aantal vlinders? Als er een significant verschil is tussen ligging, gebruik dan een posthoctoets om uit te zoeken welke liggingen van elkaar verschillen.
+
+```
+
+```{r, echo=F, message=F, warning=F}
+df <- read_excel("../data/vlinders.xlsx")
+kable(df)
+```
+
+
+```{exercise}
+dagpauwoog
+
+Tijdens een meerjarig onderzoek (4 jaren tussen 2000 en 2010) is gekeken of verschillende beheermaatregelen effect hebben op het voorkomen van de dagpauwoog (*Aglais io*), afhankelijk van het type gebied.
+Op verantwoorde wijze is in 15 droge en in 15 natte gebieden het aantal vlinders per oppervlakteenheid geteld.
+De data vind je op blackboard (dagpauwoog.xlsx)
+
+* Leg uit waarom het slim is om ieder jaar dezelfde gebieden te monitoren?
+* Beantwoord met de juiste toets de vraag of verschillende beheermaatregelen een effect hebben op aantal dagpauwogen, voer indien nodig een posthoctoets uit.
+```
